@@ -6,6 +6,19 @@ import Image from "next/image";
 import Link from "next/link";
 import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { insforge } from "@/lib/insforge-client";
+import posthog from "posthog-js";
+
+function identifyUser(user: {
+  id: string;
+  email: string;
+  profile: { name?: string } | null;
+}) {
+  posthog.identify(user.id, {
+    email: user.email,
+    name: user.profile?.name,
+  });
+  posthog.capture("oauth_sign_in_completed");
+}
 
 function CallbackHandler() {
   const router = useRouter();
@@ -38,6 +51,7 @@ function CallbackHandler() {
         try {
           const { data, error } = await insforge.auth.getCurrentUser();
           if (data?.user) {
+            identifyUser(data.user);
             if (isMounted) {
               setStatus("success");
               setTimeout(() => {
@@ -68,6 +82,10 @@ function CallbackHandler() {
             setErrorMessage(error.message || "Failed to exchange authorization code.");
           }
           return;
+        }
+
+        if (data?.user) {
+          identifyUser(data.user);
         }
 
         if (isMounted) {

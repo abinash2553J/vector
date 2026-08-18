@@ -1,42 +1,41 @@
-# Memory — Phase 1: Foundation (02 Auth)
+# Memory — Phase 1: Foundation (04 Database Schema Complete)
 
-Last updated: 2026-08-18T13:29:10+05:30
+Last updated: 2026-08-18T15:24:30+05:30
 
 ## What was built
 
-- `lib/utils.ts` — Utility helper with `MATCH_THRESHOLD = 70` and class name concatenator `cn()`.
-- `lib/insforge-client.ts` — Browser-side InsForge SDK client configured with `NEXT_PUBLIC_INSFORGE_URL` and `NEXT_PUBLIC_INSFORGE_ANON_KEY`.
-- `lib/insforge-server.ts` — Server-side InsForge client factory using `@insforge/sdk/ssr` with Next.js cookie store integration.
-- `app/(auth)/login/page.tsx` — Full login UI matching JobPilot design system with Google OAuth and GitHub OAuth buttons, loading state, error alert handling, and terms link.
-- `app/(auth)/callback/page.tsx` — OAuth callback handler with PKCE code exchange (`insforge.auth.exchangeOAuthCode`), error notifications, and automated session redirect to `/dashboard`.
-- `middleware.ts` — Route protection middleware guarding `/dashboard`, `/profile`, `/find-jobs`, and `/find-jobs/[id]`, redirecting unauthenticated users to `/login?redirect=...` and authenticated users away from `/login` to `/dashboard`.
-- `.env.local` — Configured InsForge endpoint and API key.
-- `context/ui-registry.md` — Registered `LoginPage` and `CallbackPage` with their exact CSS classes.
-- `context/progress-tracker.md` — Updated progress status, marking `02 Auth` complete and setting next to `03 PostHog Initialization`.
+- `migrations/20260818094903_create-schema.sql` — InsForge migration applied:
+  - `profiles` table: 22 columns, cascade FK to `auth.users(id)`, `updated_at` trigger, and RLS policies.
+  - `agent_runs` table: `id`, `user_id`, `status`, `job_title_searched`, `location_searched`, `jobs_found`, `started_at`, `completed_at`, user_id index, and RLS policies.
+  - `jobs` table: `id`, `run_id` (nullable, SET NULL), `user_id`, `source`, `source_url`, `external_apply_url`, `title`, `company`, `location`, `salary`, `job_type`, `about_role`, `responsibilities`, `requirements`, `nice_to_have`, `benefits`, `about_company`, `match_score`, `match_reason`, `matched_skills`, `missing_skills`, `company_research` (jsonb), `found_at`, performance indexes (`user_id`, `run_id`, `match_score`, `found_at`), and RLS policies.
+  - `agent_logs` table: `id`, `run_id`, `user_id`, `message`, `level`, `job_id`, `created_at`, indexes, and RLS policies.
+- InsForge Storage Bucket `resumes` created (private).
+- `types/index.ts` — TypeScript interfaces for `Profile`, `WorkExperienceEntry`, `Education`, `AgentRun`, `Job`, `CompanyResearch`, `AgentLog`.
+- `context/progress-tracker.md` — Marked `04 Database Schema` complete.
 
 ## Decisions made
 
-- Used official `@insforge/sdk@latest` with PKCE-enabled `signInWithOAuth` for Google and GitHub.
-- Wrapped `useSearchParams` in `<Suspense>` boundaries to ensure static page pre-rendering succeeds in Next.js Turbopack build.
-- Cookie-aware middleware inspects `insforge_access_token` and `insforge_refresh_token` for route protection.
+- Foreign keys cascade on delete from `auth.users` to `profiles`, `agent_runs`, `jobs`, `agent_logs`.
+- `jobs.run_id` is nullable (`ON DELETE SET NULL`) to allow jobs imported via URL without an `agent_run`.
+- All tables enforce Row Level Security (RLS) checking `auth.uid() = user_id` (or `auth.uid() = id` for `profiles`).
+- Indexes added for `jobs.match_score`, `jobs.found_at`, `user_id`, and `run_id` for efficient filtering/sorting in Feature 11.
 
 ## Problems solved
 
-- Resolved Next.js client-side search params CSR bailout during build by wrapping forms in Suspense boundaries.
-- Verified with `npm run build` — 100% clean production build with 0 TypeScript/ESLint errors.
+- Applied migration using `@insforge/cli db migrations up --all` after device authentication and linking to the project API base URL.
+- Confirmed database tables and storage bucket existence via CLI inspections.
+- Next.js build compilation passed cleanly (`npm run build` with 0 errors).
 
 ## Current state
 
-- Phase 1, Feature 01 (Homepage) and Feature 02 (Auth) are complete and verified.
-- The project builds cleanly with Next.js 16 App Router and React 19.
+- Phase 1 (Foundation) is 100% complete (`01 Homepage`, `02 Auth`, `03 PostHog Initialization`, `04 Database Schema`).
+- Ready to begin Phase 2 (Profile Page): `05 Profile Page — Full UI`.
 
 ## Next session starts with
 
-- **Phase 1 — Feature 03: PostHog Initialization**
-  - Create `lib/posthog-client.ts` (PostHog browser client with `NEXT_PUBLIC_POSTHOG_KEY` and `NEXT_PUBLIC_POSTHOG_HOST`)
-  - Create `lib/posthog-server.ts` (PostHog server client with `flushAt: 1` and `flushInterval: 0`)
-  - Initialize PostHog in root app layout (`app/layout.tsx`)
-  - Set up `posthog.identify()` on login and `posthog.reset()` on logout
+- **Phase 2 — Feature 05: Profile Page — Full UI**
+  - Build the complete profile page UI with mock data in `app/profile/page.tsx` and modular components under `components/profile/` (`ProfileForm.tsx`, `ResumeUpload.tsx`, `ResumePreview.tsx`, `CompletionIndicator.tsx`).
+  - Follow the styling tokens and design system specifications from `context/ui-tokens.md` and `context/ui-rules.md`.
 
 ## Open questions
 

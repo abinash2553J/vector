@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Loader2, AlertCircle, ArrowLeft } from "lucide-react";
 import { insforge } from "@/lib/insforge-client";
+import posthog from "posthog-js";
 
 function LoginForm() {
   const searchParams = useSearchParams();
@@ -17,6 +18,7 @@ function LoginForm() {
 
   const handleOAuthSignIn = async (provider: "google" | "github") => {
     try {
+      posthog.capture("oauth_sign_in_started", { provider });
       setLoadingProvider(provider);
       setErrorMessage(null);
 

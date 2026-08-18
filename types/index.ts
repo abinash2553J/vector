@@ -1,0 +1,117 @@
+// ─────────────────────────────────────────────────
+// Global TypeScript types — matches InsForge DB schema exactly
+// ─────────────────────────────────────────────────
+
+// ── profiles ──────────────────────────────────────
+
+export interface WorkExperienceEntry {
+  company: string;
+  title: string;
+  start_date: string;
+  end_date: string | null;
+  is_current: boolean;
+  responsibilities: string;
+}
+
+export interface Education {
+  degree: string;
+  field_of_study: string;
+  institution: string;
+  graduation_year: number | null;
+}
+
+export interface Profile {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  phone: string | null;
+  location: string | null;
+  current_title: string | null;
+  experience_level: "junior" | "mid" | "senior" | "lead" | null;
+  years_experience: number | null;
+  skills: string[] | null;
+  industries: string[] | null;
+  work_experience: WorkExperienceEntry[] | null;
+  education: Education | null;
+  job_titles_seeking: string[] | null;
+  remote_preference: "remote" | "onsite" | "hybrid" | "any" | null;
+  preferred_locations: string[] | null;
+  salary_expectation: string | null;
+  cover_letter_tone: "formal" | "casual" | "enthusiastic" | null;
+  linkedin_url: string | null;
+  portfolio_url: string | null;
+  work_authorization:
+    | "citizen"
+    | "permanent_resident"
+    | "visa_required"
+    | null;
+  resume_pdf_url: string | null;
+  is_complete: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// ── agent_runs ────────────────────────────────────
+
+export interface AgentRun {
+  id: string;
+  user_id: string;
+  status: "running" | "completed" | "failed";
+  job_title_searched: string | null;
+  location_searched: string | null;
+  jobs_found: number | null;
+  started_at: string;
+  completed_at: string | null;
+}
+
+// ── jobs ──────────────────────────────────────────
+
+export interface CompanyResearch {
+  companyOverview: string;
+  techStack: string[];
+  culture: string[];
+  whyThisRole: string;
+  yourEdge: string[];
+  gapsToAddress: string[];
+  smartQuestions: string[];
+  interviewPrep: string[];
+  sources: string[];
+}
+
+export interface Job {
+  id: string;
+  run_id: string | null;
+  user_id: string;
+  source: "search" | "url";
+  source_url: string | null;
+  external_apply_url: string | null;
+  title: string;
+  company: string;
+  location: string | null;
+  salary: string | null;
+  job_type: "fulltime" | "parttime" | "contract" | null;
+  about_role: string | null;
+  responsibilities: string[] | null;
+  requirements: string[] | null;
+  nice_to_have: string[] | null;
+  benefits: string[] | null;
+  about_company: string | null;
+  match_score: number | null;
+  match_reason: string | null;
+  matched_skills: string[] | null;
+  missing_skills: string[] | null;
+  company_research: CompanyResearch | null;
+  found_at: string;
+}
+
+// ── agent_logs ────────────────────────────────────
+
+export interface AgentLog {
+  id: string;
+  run_id: string;
+  user_id: string;
+  message: string;
+  level: "info" | "success" | "warning" | "error";
+  job_id: string | null;
+  created_at: string;
+}
